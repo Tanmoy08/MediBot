@@ -17,6 +17,8 @@ class NonPrescription(ComponentDialog):
             WaterfallDialog(
                 WaterfallDialog.__name__,
                 [
+                    self.get_medicine_name,
+                    self.get_dose,
                     self.final_step
                 ]
             )
