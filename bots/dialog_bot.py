@@ -81,12 +81,15 @@ class DialogBot(ActivityHandler):
                 user_data.phone = turn_context.activity.value['phone']
                 user_data.password = turn_context.activity.value['password']
                 await turn_context.send_activity("Hi "+ user_data.name)
-
-        await DialogHelper.run_dialog(
-                self.dialog,
-                turn_context,
-                self.conversation_state.create_property("DialogState"),
-                )
+            else:
+                message = Activity(type = ActivityTypes.message, attachments=[self._create_adaptive_card_attachment()],)
+                await turn_context.send_activity(message)
+        if user_data.phone != None and user_data.password != None:
+            await DialogHelper.run_dialog(
+                    self.dialog,
+                    turn_context,
+                    self.conversation_state.create_property("DialogState"),
+                    )
 
     def _create_adaptive_card_attachment(self) -> Attachment:
          card_path = os.path.join(os.getcwd(), CARDS[0])

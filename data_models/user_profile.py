@@ -9,7 +9,7 @@ class UserProfile:
       This is our application state. Just a regular serializable Python class.
     """
 
-    def __init__(self, name: str = "John", phone: str = "7259560352", password: str = "abc123"):
+    def __init__(self, name: str = "John", phone: str = None, password: str = None):
         self.name = name
         self.phone = phone
         self.password = password

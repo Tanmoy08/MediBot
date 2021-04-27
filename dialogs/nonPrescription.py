@@ -25,5 +25,5 @@ class NonPrescription(ComponentDialog):
         self.initial_dialog_id = WaterfallDialog.__name__
 
     async def final_step(self, step_context: WaterfallStepContext) -> DialogTurnResult:
-        await step_context.context.send_activity("Inside Prescription")
+        await step_context.context.send_activity("Inside Non - Prescription")
         return await step_context.end_dialog()
