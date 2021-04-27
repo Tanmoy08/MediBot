@@ -1,0 +1,43 @@
+{
+    "$schema": "http://adaptivecards.io/schemas/adaptive-card.json",
+    "type": "AdaptiveCard",
+    "version": "1.3",
+    "body": [
+        {
+            "type": "TextBlock",
+            "size": "Medium",
+            "weight": "Bolder",
+            "text": " Login",
+            "horizontalAlignment": "Center",
+            "wrap": true
+        },
+        {
+            "type": "Input.Text",
+            "style": "Tel",
+            "id": "phone",
+            "label": "Phone",
+            "maxLength": 10,
+            "isRequired": true,
+            "errorMessage": "Please Validate Phone Number",
+            "regex": "^[0-9]{10}$"
+        },
+        {
+            "type": "Input.Text",
+            "label": "Password",
+            "style": "password",
+            "id": "password",
+            "isRequired": true,
+            "errorMessage": "Password is required"
+        }
+    ],
+    "actions": [
+        {
+            "type": "Action.Submit",
+            "title": "Submit",
+            "data": {
+                "id": "1234567890"
+            },
+            "style": "positive"
+        }
+    ]
+}
