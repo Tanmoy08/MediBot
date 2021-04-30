@@ -59,9 +59,11 @@ class Prescription(ComponentDialog):
         step_context.values["Prescription_picture"] = (None if not step_context.result else step_context.result[0])
         image_url_response = urllib.request.urlopen(step_context.values["Prescription_picture"].content_url)
         image_data = image_url_response.read()
+        await step_context.context.send_activity("Please wait, while I process your prescription.")
         dict_response = self.recognise_custom_forms.recognize_custom_forms(image_data)
         step_context.values["Medicine_Name"] = dict_response['json']['analyzeResult']['documentResults'][0]['fields']['Medicine details']['valueArray'][0]['valueObject']['Medicine Name']['text']
         step_context.values["Medicine_Quantity"] = dict_response['json']['analyzeResult']['documentResults'][0]['fields']['Medicine details']['valueArray'][0]['valueObject']['Quantity']['text']
+        step_context.values["CustomerName"] = dict_response['json']['analyzeResult']['documentResults'][0]['fields']['Customer name']['text']
         
         Confirm_text = "Please confirm your order : Medicine name - " + step_context.values["Medicine_Name"] + " and quantity - " + step_context.values["Medicine_Quantity"]
         reprompt_text = "I didn't get that, you can use the buttons below as well to respond"
@@ -73,9 +75,9 @@ class Prescription(ComponentDialog):
     async def final_step(self, step_context: WaterfallStepContext) -> DialogTurnResult:
         user_data = await self.user_data_accessor.get(step_context.context, UserProfile)
         if step_context.result and step_context.result != None:
-            await step_context.context.send_activity("Please wait while i am placing your order")
+            await step_context.context.send_activity("Please wait, while I am placing your order.")
             api = "https://orgde91d4a0.api.crm.dynamics.com/api/data/v9.2/mom_orders"
-            data = {"mom_name":user_data.name,"mom_phonenumber":user_data.phone,"mom_medicine":step_context.values["Medicine_Name"],"mom_dose":step_context.values["Medicine_Quantity"]}
+            data = {"mom_name":step_context.values["CustomerName"],"mom_phonenumber":user_data.phone,"mom_medicine":step_context.values["Medicine_Name"],"mom_dose":step_context.values["Medicine_Quantity"]}
             response = await self.crm_api_helper.Create_Record(api, data)
             if response.raise_for_status() == None:
                 await step_context.context.send_activity("Order successfully placed for medicine name - " + step_context.values["Medicine_Name"] + " , quantity - " + step_context.values["Medicine_Quantity"])
@@ -88,7 +90,7 @@ class Prescription(ComponentDialog):
     @staticmethod
     async def picture_prompt_validator(prompt_context: PromptValidatorContext) -> bool:
         if not prompt_context.recognized.succeeded:
-            await prompt_context.context.send_activity("No attachment received kindly, re-attach prescription. prescription must either be in jpeg or png format.")
+            await prompt_context.context.send_activity("No attachment received kindly, re-attach prescription. Prescription must either be in .jpeg or .png format.")
             return False
         attachments = prompt_context.recognized.value
         valid_images = [
