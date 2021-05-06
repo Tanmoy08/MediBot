@@ -41,3 +41,11 @@ class CrmApiHelper:
         response = requests.get(api, headers = request_header)
         return response
 
+    async def update_record(self, api: str, data):
+        context = adal.AuthenticationContext(CrmApiHelper.AUTHORITY_URI, api_version=None)
+        token = context.acquire_token_with_client_credentials(CrmApiHelper.RESOURCE_URI, CrmApiHelper.CLIENT_ID, CrmApiHelper.CLIENT_SECRET)
+        request_header = CrmApiHelper.REQUEST_HEADER
+        request_header["Authorization"] = "Bearer " + token["accessToken"]
+        response = requests.put(api, headers = request_header, data = json.dumps(data))
+        return response
+

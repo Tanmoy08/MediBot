@@ -11,6 +11,7 @@ class Orders(Enum):
 
 class MedicineInventory(Enum):
     name = "mom_medicineinventories"
+    id = "mom_medicineinventoryid"
     medicine_name = "mom_name"
     dose = "mom_dose"
     inventory_stock = "mom_inventorystock"

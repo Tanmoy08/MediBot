@@ -69,6 +69,7 @@ class NonPrescription(ComponentDialog):
             if(medicine[MedicineInventory.dose.value] == step_context.values["selected_dose"]):
                 inventory_medicine_quantity = medicine[MedicineInventory.inventory_stock.value]
                 step_context.values["medicine_id"] = medicine["mom_medicineinventoryid"]
+                step_context.values["Medicine_inventory"] = inventory_medicine_quantity
                 break
 
         if(inventory_medicine_quantity == 0):
@@ -95,7 +96,7 @@ class NonPrescription(ComponentDialog):
      
         if step_context.result and step_context.result != None:
             
-            user_data.medicine_data.append({"medicine_name":step_context.values["medicine_name"],"selected_dose":step_context.values["selected_dose"],"medicine_quantity":step_context.values["medicine_quantity"],"medicine_id":step_context.values["medicine_id"]})
+            user_data.medicine_data.append({"medicine_name":step_context.values["medicine_name"],"selected_dose":step_context.values["selected_dose"],"medicine_quantity":step_context.values["medicine_quantity"],"medicine_id":step_context.values["medicine_id"],"medicine_inventory_stock":step_context.values["Medicine_inventory"]})
         
         Confirm_text = "Do you want to add more medicines?"
         reprompt_text = "I didn't get that, you can use the buttons below as well to respond"
@@ -108,16 +109,20 @@ class NonPrescription(ComponentDialog):
         if step_context.result and step_context.result != None:
             return await step_context.replace_dialog(NonPrescription.__name__)
         else:
-            confirm_text = "Please confirm your order for above medicines in cart:"
-            reprompt_text = "I didn't get that, you can use the buttons below as well to respond"
-            for each_medicine in user_data.medicine_data:
-                await step_context.context.send_activity("Medicine name - " + each_medicine["medicine_name"] + " " + each_medicine["selected_dose"] + " " + " and quantity - " + str(each_medicine["medicine_quantity"]))
-            return await step_context.prompt(ConfirmPrompt.__name__,
-                                         PromptOptions(prompt=MessageFactory.text(confirm_text),retry_prompt=MessageFactory.text(reprompt_text)))
-           
+            if(useruser_data.medicine_data !=[]):
+                confirm_text = "Please confirm your order for above medicines in cart:"
+                reprompt_text = "I didn't get that, you can use the buttons below as well to respond"
+                for each_medicine in user_data.medicine_data:
+                    await step_context.context.send_activity("Medicine name - " + each_medicine["medicine_name"] + " " + each_medicine["selected_dose"] + " " + " and quantity - " + str(each_medicine["medicine_quantity"]))
+                return await step_context.prompt(ConfirmPrompt.__name__,
+                                             PromptOptions(prompt=MessageFactory.text(confirm_text),retry_prompt=MessageFactory.text(reprompt_text)))
+            else:
+               await step_context.context.send_activity("There are no items in your cart. You can try again, once sure.")
+               return await step_context.end_dialog()
+
     async def final_step(self, step_context: WaterfallStepContext) -> DialogTurnResult:
         user_data = await self.user_data_accessor.get(step_context.context, UserProfile)
-        if True:#step_context.result and step_context.result != None:
+        if step_context.result and step_context.result != None:
             #order creation
             api = CrmApi.root_url.value + Orders.name.value + "?$select=mom_name,mom_orderid"
             data = {Orders.customer_name.value:user_data.name,Orders.phone_number.value:user_data.phone}
@@ -127,11 +132,14 @@ class NonPrescription(ComponentDialog):
                 order_id = json.loads(response.text)["mom_orderid"]
             
             #medicine line item creation            
-            api = CrmApi.root_url.value + MedicineLineItems.name.value
+            medicine_line_item_api = CrmApi.root_url.value + MedicineLineItems.name.value
             for each_medicine in user_data.medicine_data:
-                data = {MedicineLineItems.order_name.value:"/mom_orders(" + order_id + ")",MedicineLineItems.quantity.value:121,MedicineLineItems.medicine.value:"/mom_medicineinventories("+each_medicine["medicine_id"]+")"}
-                response = await self.crm_api_helper.Create_Record(api, data)
+                data = {MedicineLineItems.order_name.value:"/mom_orders(" + order_id + ")",MedicineLineItems.quantity.value:int(each_medicine["medicine_quantity"]),MedicineLineItems.medicine.value:"/mom_medicineinventories("+each_medicine["medicine_id"]+")"}
+                response = await self.crm_api_helper.Create_Record(medicine_line_item_api, data)
                 #Medicine Inventory Quantity Deduction.
+                medicine_inventory_update_api = CrmApi.root_url.value + MedicineInventory.name.value + "("+each_medicine["medicine_id"]+")/" + MedicineInventory.inventory_stock.value
+                data = {"value":(int(each_medicine["medicine_inventory_stock"]) - int(each_medicine["medicine_quantity"]))}
+                response = await self.crm_api_helper.update_record(medicine_inventory_update_api, data)
 
         else:
             await step_context.context.send_activity("Sure, you can try again once sure.")
